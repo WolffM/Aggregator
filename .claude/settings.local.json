@@ -10,7 +10,9 @@
       "Bash(cat:*)",
       "Bash(pnpm install:*)",
       "Bash(npm view:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ]
   }
 }

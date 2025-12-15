@@ -66,4 +66,9 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs -r git add
 fi
 
+# Ensure version bump files are staged (they may have been added after STAGED_FILES was captured)
+if [ -f package.json ]; then
+  git add package.json pnpm-lock.yaml 2>/dev/null || true
+fi
+
 echo "✅ All pre-commit checks passed!"
