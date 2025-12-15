@@ -55,11 +55,6 @@ pnpm install
 # Start dev server
 pnpm dev
 
-# Build for production
-pnpm build
-
-# Lint
-pnpm lint
 ```
 
 ## API
