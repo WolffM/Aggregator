@@ -63,27 +63,40 @@ jobs:
           current_version=$(node -p "require('./package.json').version")
           echo "Current version: $current_version"
           
-          # Check if this version already exists in the registry
-          if pnpm view "${package_name}@${current_version}" version 2>/dev/null; then
-            echo "⚠️  Version $current_version already published, bumping version..."
-            
-            # Parse version
-            major=$(echo $current_version | cut -d. -f1)
-            minor=$(echo $current_version | cut -d. -f2)
-            patch=$(echo $current_version | cut -d. -f3)
+          # Parse initial version
+          major=$(echo $current_version | cut -d. -f1)
+          minor=$(echo $current_version | cut -d. -f2)
+          patch=$(echo $current_version | cut -d. -f3)
+          
+          # Keep bumping until we find an unpublished version
+          new_version="$current_version"
+          max_attempts=50
+          attempt=0
+          
+          while pnpm view "${package_name}@${new_version}" version 2>/dev/null && [ $attempt -lt $max_attempts ]; do
+            echo "⚠️  Version $new_version already published, bumping..."
             
             # Rollover at .20 to keep patch numbers manageable (matching pre-commit hook)
             if [ $patch -ge 20 ]; then
-              new_minor=$((minor + 1))
-              new_version="$major.$new_minor.0"
+              minor=$((minor + 1))
+              patch=0
               echo "🚀 Rolling over to minor version"
             else
-              new_patch=$((patch + 1))
-              new_version="$major.$minor.$new_patch"
+              patch=$((patch + 1))
               echo "📈 Incrementing patch version"
             fi
             
-            # Update package.json with new version
+            new_version="$major.$minor.$patch"
+            attempt=$((attempt + 1))
+          done
+          
+          if [ $attempt -ge $max_attempts ]; then
+            echo "❌ Error: Could not find available version after $max_attempts attempts"
+            exit 1
+          fi
+          
+          # Update package.json with new version if it changed
+          if [ "$new_version" != "$current_version" ]; then
             node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = process.argv[1]; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');" "$new_version"
             
             echo "✅ Version bumped: $current_version → $new_version"
