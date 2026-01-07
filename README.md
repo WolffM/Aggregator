@@ -59,6 +59,19 @@ pnpm dev
 
 ```
 
+### Versioning
+
+This package uses an automatic versioning system with dual safeguards:
+
+1. **Pre-commit Hook** (Primary): Automatically bumps the patch version when code changes are committed
+2. **Workflow Check** (Safety Net): The publish workflow checks if a version already exists in the registry and bumps it if needed
+
+This redundancy ensures version conflicts are avoided even when commits bypass the pre-commit hook (e.g., web UI edits, `--no-verify`, direct pushes).
+
+Version format: `major.minor.patch` with automatic rollover at `.20` to keep patch numbers manageable.
+
+
+
 ## API
 
 The backend API provides:
