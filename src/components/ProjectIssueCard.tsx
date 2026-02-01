@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import type { Issue, Project } from '../api/types'
 import { PlatformIcon } from './PlatformIcon'
 import { DifficultyBadge } from './DifficultyBadge'
+import { ProjectDetailModal } from './ProjectDetailModal'
 import { formatRelativeTime } from '../utils/formatDate'
 
 interface ProjectIssueCardProps {
@@ -10,15 +12,31 @@ interface ProjectIssueCardProps {
 }
 
 export function ProjectIssueCard({ project, issues, maxIssues = 5 }: ProjectIssueCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const displayIssues = issues.slice(0, maxIssues)
 
   return (
     <div className="project-card">
-      <div className="project-card__header">
+      <button
+        type="button"
+        className="project-card__header project-card__header--clickable"
+        onClick={() => setIsModalOpen(true)}
+        title="Click to view all issues"
+      >
         <PlatformIcon platform={project.platform} />
         <h3 className="project-card__title">{project.name}</h3>
         <span className="project-card__count">{issues.length} issues</span>
-      </div>
+        <span className="project-card__expand-icon" aria-hidden="true">
+          ⤢
+        </span>
+      </button>
+
+      <ProjectDetailModal
+        project={project}
+        issues={issues}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
       {displayIssues.length === 0 ? (
         <div className="project-card__empty">No issues available</div>

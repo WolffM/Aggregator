@@ -17,10 +17,20 @@ export function ProjectSelector({
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredProjects = useMemo(() => {
-    if (!searchQuery.trim()) return projects
-    const query = searchQuery.toLowerCase()
-    return projects.filter(p => p.name.toLowerCase().includes(query))
-  }, [projects, searchQuery])
+    let filtered = projects
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = projects.filter(p => p.name.toLowerCase().includes(query))
+    }
+    // Sort: selected projects first, then alphabetically within each group
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedProjects.includes(a.slug)
+      const bSelected = selectedProjects.includes(b.slug)
+      if (aSelected && !bSelected) return -1
+      if (!aSelected && bSelected) return 1
+      return a.name.localeCompare(b.name)
+    })
+  }, [projects, searchQuery, selectedProjects])
 
   const handleToggle = (slug: string) => {
     if (selectedProjects.includes(slug)) {
