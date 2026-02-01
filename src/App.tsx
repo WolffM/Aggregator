@@ -11,15 +11,40 @@ import type { OssAggregatorProps } from './entry'
 const DEFAULT_SELECTED_NAMES = [
   'VLC Media Player',
   'MediaWiki',
-  'Krita',
   'Internet Archive Open Library',
   'PyTorch',
   'Node.js',
   'Blender',
   'Hugging Face Transformers',
   'React'
-  // Not in API yet: FFmpeg, Linux kernel
 ]
+
+const STORAGE_KEY = 'oss-aggregator-selected-projects'
+
+// Load saved selections from localStorage
+function loadSavedSelections(): string[] | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved)
+      if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+        return parsed
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null
+}
+
+// Save selections to localStorage
+function saveSelections(slugs: string[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slugs))
+  } catch {
+    // Ignore storage errors (e.g., quota exceeded)
+  }
+}
 
 export default function App(props: OssAggregatorProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -54,9 +79,22 @@ export default function App(props: OssAggregatorProps = {}) {
     refetch
   } = useIssues('all')
 
-  // Set default selected projects once projects are loaded
+  // Initialize selected projects from localStorage or defaults
   useEffect(() => {
     if (projects.length > 0 && !hasInitializedDefaults) {
+      const savedSlugs = loadSavedSelections()
+
+      if (savedSlugs && savedSlugs.length > 0) {
+        // Filter to only include slugs that exist in current projects
+        const validSlugs = savedSlugs.filter(slug => projects.some(p => p.slug === slug))
+        if (validSlugs.length > 0) {
+          setSelectedProjectSlugs(validSlugs)
+          setHasInitializedDefaults(true)
+          return
+        }
+      }
+
+      // Fall back to defaults
       const defaultSlugs = projects
         .filter(p => DEFAULT_SELECTED_NAMES.includes(p.name))
         .map(p => p.slug)
@@ -64,6 +102,13 @@ export default function App(props: OssAggregatorProps = {}) {
       setHasInitializedDefaults(true)
     }
   }, [projects, hasInitializedDefaults])
+
+  // Save selections to localStorage whenever they change
+  useEffect(() => {
+    if (hasInitializedDefaults && selectedProjectSlugs.length >= 0) {
+      saveSelections(selectedProjectSlugs)
+    }
+  }, [selectedProjectSlugs, hasInitializedDefaults])
 
   // Group issues by project and filter by selection
   const issuesByProject = useMemo(() => {
