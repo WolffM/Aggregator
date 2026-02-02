@@ -8,45 +8,43 @@ Find your first open source contribution! This dashboard aggregates beginner-fri
 
 ## Features
 
-- **Multi-Project View**: Browse issues from 9+ major open source projects
+- **Multi-Project View**: Browse issues from 20+ major open source projects
 - **Project Selection**: Choose which projects to display with multi-select checkboxes
 - **Difficulty Indicators**: Issues tagged as beginner, intermediate, or unknown
-- **Multi-Platform**: GitHub, GitLab, Gitea, and Phabricator projects
+- **Multi-Platform**: GitHub, GitLab, Gitea, Phabricator, Bugzilla, and Trac projects
 - **Beautiful Themes**: 16 light/dark theme options
 - **Responsive Design**: Works on desktop and mobile
 - **Smart Caching**: Fast loading with 4-minute client-side cache
 
+## Package Exports
+
+This package provides both UI components and API logic:
+
+```typescript
+// UI components (React)
+import { OSSAggregator } from '@wolffm/oss-aggregator'
+import '@wolffm/oss-aggregator/style.css'
+
+// API handler (Cloudflare Workers)
+import { createOSSHandler, type OSSEnv } from '@wolffm/oss-aggregator/api'
+```
+
 ## Supported Projects
 
-| Project                       | Platform          | Category |
-| ----------------------------- | ----------------- | -------- |
-| MediaWiki                     | Phabricator       | Web Dev  |
-| Blender                       | Gitea             | Creative |
-| Node.js                       | GitHub            | Web Dev  |
-| PyTorch                       | GitHub            | ML/AI    |
-| React                         | GitHub            | Web Dev  |
-| Hugging Face Transformers     | GitHub            | ML/AI    |
-| Internet Archive Open Library | GitHub            | Web Dev  |
-| Krita                         | GitLab (KDE)      | Creative |
-| VLC Media Player              | GitLab (VideoLAN) | Media    |
-
-## How It Works
-
-The aggregator fetches "good first issue" labeled tickets from each project's issue tracker and displays them in a unified interface. Issues are refreshed periodically by the backend API.
-
-Each project card shows the 5 most recently updated issues, along with:
-
-- Issue title (links to original)
-- Difficulty level
-- Last update time
-- Link to project's contributing guide
-
-## Tech Stack
-
-- **Frontend**: React 19, TypeScript, Vite
-- **Backend**: Cloudflare Workers (API at `hadoku.me/oss/api`)
-- **Styling**: CSS custom properties with `@wolffm/themes`
-- **Hosting**: Cloudflare Pages
+| Project                   | Platform    | Category |
+| ------------------------- | ----------- | -------- |
+| MediaWiki                 | Phabricator | Web Dev  |
+| Blender                   | Gitea       | Creative |
+| Node.js                   | GitHub      | Web Dev  |
+| PyTorch                   | GitHub      | ML/AI    |
+| React                     | GitHub      | Web Dev  |
+| Hugging Face Transformers | GitHub      | ML/AI    |
+| Open Library              | GitHub      | Web Dev  |
+| Krita                     | GitLab      | Creative |
+| VLC Media Player          | GitLab      | Media    |
+| Linux Kernel              | Bugzilla    | Systems  |
+| FFmpeg                    | Trac        | Media    |
+| ...and more               |             |          |
 
 ## Development
 
@@ -57,29 +55,79 @@ pnpm install
 # Start dev server
 pnpm dev
 
+# Build (UI + API)
+pnpm build
+
+# Lint
+pnpm lint
 ```
 
-### Versioning
+### Build Output
 
-This package uses an automatic versioning system with dual safeguards:
+The build produces:
 
-1. **Pre-commit Hook** (Primary): Automatically bumps the patch version when code changes are committed
-2. **Workflow Check** (Safety Net): The publish workflow checks if a version already exists in the registry and bumps it if needed
+```
+dist/
+├── index.js          # UI bundle (React components)
+├── style.css         # UI styles
+└── api/
+    └── index.js      # API bundle (Hono handler)
+```
 
-This redundancy ensures version conflicts are avoided even when commits bypass the pre-commit hook (e.g., web UI edits, `--no-verify`, direct pushes).
+## API Usage
 
-Version format: `major.minor.patch` with automatic rollover at `.20` to keep patch numbers manageable.
+### For Cloudflare Workers
 
+```typescript
+import { createOSSHandler, type OSSEnv } from '@wolffm/oss-aggregator/api'
 
+// Create handler with base path
+const app = createOSSHandler('/oss/api')
 
-## API
+export default app
+```
 
-The backend API provides:
+### Environment Variables
 
-- `GET /projects` - List all projects and categories
-- `GET /issues?pool={pool}` - Get issues filtered by category
-- `GET /issues/{slug}` - Get issues for a specific project
-- `GET /health` - Health check
+| Variable            | Required    | Description                            |
+| ------------------- | ----------- | -------------------------------------- |
+| `GITHUB_TOKEN`      | Recommended | GitHub PAT for higher rate limits      |
+| `PHABRICATOR_TOKEN` | Optional    | API token for Phabricator projects     |
+| `CACHE_KV`          | Optional    | KV namespace for caching blocked sites |
+
+### API Endpoints
+
+| Method | Endpoint                 | Description                           |
+| ------ | ------------------------ | ------------------------------------- |
+| GET    | `/health`                | Health check                          |
+| GET    | `/projects`              | List all projects with pools          |
+| GET    | `/projects/:slug/issues` | Get issues for a specific project     |
+| GET    | `/issues?pool=:pool`     | Get issues for all projects in a pool |
+| GET    | `/openapi.json`          | OpenAPI specification                 |
+| POST   | `/issues/:id/mark`       | Mark an issue (ignored/process)       |
+| DELETE | `/issues/:id/mark`       | Unmark an issue                       |
+| GET    | `/marked?status=:status` | Get marked issues                     |
+
+### Programmatic Access
+
+For direct access without HTTP:
+
+```typescript
+import { createOSSFetcher } from '@wolffm/oss-aggregator/api'
+
+const fetcher = createOSSFetcher(env)
+const issues = await fetcher.fetchIssuesByPool('web-dev')
+const projects = fetcher.getProjects()
+```
+
+## Versioning
+
+This package uses automatic versioning with dual safeguards:
+
+1. **Pre-commit Hook** (Primary): Bumps patch version when code changes are committed
+2. **Workflow Check** (Safety Net): Checks registry and bumps if version exists
+
+Version format: `major.minor.patch` with automatic rollover at `.20`.
 
 ## License
 
