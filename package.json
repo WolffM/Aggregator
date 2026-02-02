@@ -1,6 +1,6 @@
 {
   "name": "@wolffm/oss-aggregator",
-  "version": "1.0.6",
+  "version": "2.0.1",
   "description": "OSS Issue Aggregator - Browse beginner-friendly issues across open source projects",
   "type": "module",
   "repository": {
@@ -16,18 +16,33 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    },
+    "./types": {
+      "types": "./dist/api/types.d.ts",
+      "import": "./dist/api/types.js"
+    }
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc -p tsconfig.build.json",
+    "build": "pnpm build:ui && pnpm build:api",
+    "build:ui": "vite build && tsc -p tsconfig.build.json",
+    "build:api": "tsup",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "prepare": "husky"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.1.5",
+    "hono": "^4.11.4",
+    "zod": "^4.1.13"
   },
   "peerDependencies": {
     "@wolffm/task-ui-components": ">=1.0.0",
@@ -36,6 +51,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250124.0",
     "@eslint/js": "^9.39.2",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
@@ -52,6 +68,7 @@
     "prettier": "^3.8.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }
