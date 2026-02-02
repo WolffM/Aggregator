@@ -262,8 +262,8 @@ export function createOSSHandler(basePath = '/oss/api') {
       allIssues = allIssues.filter(issue => issue.difficulty === difficulty)
     }
 
-    // Sort by updatedAt descending
-    allIssues.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    // Sort by createdAt descending (newest first)
+    allIssues.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     return c.json(
       {

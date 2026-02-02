@@ -127,12 +127,12 @@ export default function App(props: OssAggregatorProps = {}) {
       grouped.set(issue.project, existing)
     }
 
-    // Sort issues within each project by updatedAt (most recent first)
+    // Sort issues within each project by createdAt (newest first)
     for (const [key, projectIssues] of grouped) {
       grouped.set(
         key,
         projectIssues.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
       )
     }
